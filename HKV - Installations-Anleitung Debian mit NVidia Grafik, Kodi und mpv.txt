@@ -1,0 +1,409 @@
+﻿Installations-Anleitung Debian mit NVidia Grafik, Kodi und mpv
+Download des Images Debian “testing”
+https://cdimage.debian.org/cdimage/weekly-builds/amd64/iso-dvd/debian-testing-amd64-DVD-1.iso
+
+
+Image auf USB-Stick schreiben und booten.
+Gutes Tool hierzu: Etcher: https://github.com/balena-io/etcher/releases/download/v1.5.113/balenaEtcher-Portable-1.5.113.exe
+UEFI-Setup
+In das UEFI-Setup/BIOS des Rechners wechseln (meist Taste “Entfernen beim Booten drücken) und das Bootmedium USB Stick auswählen und anschließend neu starten.
+Installation des Debian Grundsystems
+Auswahl: “Graphical install”
+Menü “Select a language” -> German
+Menü Standort -> Deutschland
+Menü “Tastatur” -> Deutsch
+Eingabe Rechnername -> mpv-pc
+Domainname -> .box (passt zu Fritzbox)
+Root-Pwd eingeben -> player
+Benutzerkonto anlegen -> player, Passwort ebenfalls player
+Festplatten partitionieren -> 2. Punkt “Vollständig” auswählen
+Auswahl der richtigen Festplatte!
+Alle Dateien auf eine Partition
+Festplatten Partitionsübersicht bestätigen
+-> Basis-System wird installiert…
+Netzwerkspiegel verwenden -> ja und einen in der Nähe aussuchen
+Popularity-contest -> nein
+Software-Auswahl:
+* Desktop
+* Xfce4
+* SSH-Server
+* Systemwerkzeuge
+Systemzeit auf UTC? -> Nein
+Installation abgeschlossen -> reboot
+Einrichtung Debian
+sudo einrichten und root Passwort setzen
+Nun folgt einige Arbeit mit dem Terminal. Man kann generell mit “STRG und c” aus dem Terminal kopieren und mit “STRG UMSCHALT v” ins Terminal einfügen.
+Linux unterscheidet Groß- und Kleinschreibung: Die Ordner test und Test sind zwei verschiedene! 
+Ab hier ist es sicherlich eine gute Idee, sich die Installationsanleitung auf dem eigentlichen Linux-PC zu öffnen, da einiges kopiert werden muss.
+
+
+Ein Terminal öffnen. Befehl:
+su -
+(das MINUS nicht vergessen!) um root zu werden
+Befehl:
+visudo
+Am Ende der Datei folgende Zeile hinzufügen:
+player     ALL=(ALL:ALL) ALL
+CTRL x zum Speichern
+y  zum Bestätigen
+ENTER
+STRG d zum verlassen des root Modus
+
+
+Login als Benutzer player mit dem Passwort player
+Terminal öffnen
+sudo nano /etc/apt/sources.list und alles mit cdrom auskommentieren ( # an Zeilenanfang )
+CTRL x zum Speichern
+y  zum Bestätigen
+ENTER
+
+
+sudo apt update
+NVidia-Treiber installieren/einrichten
+Im Terminal
+sudo apt install linux-headers-amd64
+Die NVidia-Paketquellen dem System bekannt machen:
+Im Terminal
+sudo nano /etc/apt/sources.list
+und den ersten EIntrag ergänzen, so dass er wie folgt aussieht:
+deb http://deb.debian.org/debian/ bookworm main contrib non-free
+CTRL x zum Speichern
+y  zum Bestätigen
+ENTER
+Nun mit dem Befehl
+sudo apt update
+die Paketquellen neu einlesen und schließlich mit dem Befehl
+sudo apt install nvidia-driver firmware-misc-nonfree nvtop
+installieren.
+Systemmeldung, das Nuoveau Treiber geladen sei, mit ENTER bestätigen.
+Hiernach das System einmal neu starten, um den neuen Treiber zu laden.
+Anschließend mit dem Aufruf von
+sudo nvidia-settings
+Das NVidia-Konfigurationstool aufrufen.
+Die Nvidia Einstellungen sind nun unter “Anwendungen/Einstellungen” zu finden
+________________
+Kodi und mpv installieren/konfigurieren
+Im Terminal
+sudo apt install kodi mpv
+mpv in Kodi als Player einbinden:
+Anlegen/editieren der Datei .kodi/userdata/playercorefactory.xml
+(Dateien, die mit einem Punkt beginnen, sind unsichtbar, bis sie im Dateimanager auf sichtbar gestellt werden. Auch auf dem Terminal braucht es den Schalter “-a”, also z.B. ls -la um sie sehen zu können).
+Im Terminal
+sudo nano .kodi/userdata/playercorefactory.xml
+aufrufen und folgenden Text markieren, kopieren und mit “STRG” und “SHIFT” und “v” einfügen
+
+
+<playercorefactory>
+  <players>
+    <player name="MPV-HDR" type="ExternalPlayer" audio="false" video="true">
+      <filename>/usr/bin/mpv-starter</filename>
+      <args>HDR  "{1}"</args>
+      <hidexbmc>false</hidexbmc>
+    </player>
+    <player name="MPV-SDR" type="ExternalPlayer" audio="false" video="true">
+      <filename>/usr/bin/mpv-starter</filename>
+      <args>SDR  "{1}"</args>
+      <hidexbmc>false</hidexbmc>
+    </player>
+  </players>
+  <rules action="prepend">
+    <rule videoresolution="2160" player="MPV-HDR"/>
+    <rule videoresolution="4K" player="MPV-HDR"/>
+    <rule video="true" player="MPV-SDR"/>
+  </rules>
+</playercorefactory>
+
+
+Speichern wie gehabt.
+Anmerkung: Das Regel-Set ist sicherlich noch nicht optimal!
+
+
+________________
+
+
+Anlegen der Datei /usr/bin/mpv-starter:
+Ich habe hier einen kleinen Wrapper zwischen geschoben, um bei Bedarf noch Aktionen auszuführen, bei Start und Stop von mpv. Diese sind hier auskommentiert.
+sudo nano /usr/bin/mpv-starter
+Inhalt:
+
+
+#!/bin/sh
+
+
+# Steuerung eines JVC-Projektors bei Bedarf (Lamp hi/lo, etc..)
+#/usr/bin/projector_control $1 & 
+
+
+[ "$1" = "SDR" ] && ICC="low" || ICC="high"
+#echo "Setting ICC-profile "$ICC".icc" # Anwenden des passenden ICC-Profils bei Bedarf
+#DISPLAY=:0 dispwin ~/icc-profiles/"$ICC".icc
+
+
+/usr/bin/mpv "$2" # Aufruf von mpv mit Übergabe der Datei aus kodi heraus
+
+
+# Beispiel für Lichtsteuerung, hier über http-Abfrage
+#curl -s http://192.168.10.80/lights.php?pauselights=1 > /dev/null &
+
+
+# Steuerung eines JVC-Projektors bei Bedarf (Lamp hi/lo, etc..)
+#/usr/bin/projector_control SDR & 
+
+
+exit 0
+
+
+Speichern und die Datei anschließend ausführbar machen:
+sudo chmod 755 /usr/bin/mpv-starter
+
+
+
+
+________________
+
+
+Anlegen der Datei /home/player/.config/mpv/mpv.conf
+mkdir .config/mpv
+nano .config/mpv/mpv.conf
+Inhalt:
+
+
+# Allgemeines
+save-position-on-quit=yes
+
+
+# OSD-Bar aufhübschen und nach unten schieben
+osd-duration=3000
+osd-bar-align-y=0.99
+osd-bar-w=99
+osd-border-size=2
+osd-bar-h=2
+osd-font-size=25
+osd-color=0.6/0.3 # Subs 70% grau with 40% Alpha
+osd-align-y=center
+
+
+# Sprachen/Untertitel, ich mag O-Ton
+alang=en,eng,fr,fre,fra,jp,jap,chin,de,ger
+slang=en,eng,de,ger
+sid=no # Untertitel beim Start deaktivieren
+sub-font-size=32
+#image-subs-video-resolution=yes
+sub-bold=yes
+sub-border-size=2
+sub-color=0.70/0.70 # Subs 70% grau with 70% Alpha
+sub-auto=fuzzy # externe Subs suchen und finden
+#sub-pos=114
+
+
+#Screenshots
+screenshot-directory=/home/mpv/Pictures/MPV-Screenshots
+screenshot-template="%F-%P"
+
+
+# Audio HDMI out über Nvidia-Ausgang, evtl. DEV=2 auf 1 anpassen
+audio-device=alsa/hdmi:CARD=NVidia,DEV=2
+audio-spdif=ac3,eac3,dts-hd,truehd
+audio-channels=7.1,5.1,stereo
+audio-delay=0.0 # Audio-Delay in Sekunden
+
+
+# GPU-Einstellungen für Linux!
+gpu-api=vulkan
+hwdec=auto-copy-safe
+
+
+# Video-Ausgabe
+target-trc=auto # Projektor Gamma steht auf 2,2
+profile=gpu-hq
+fs=yes
+video-align-y=1 # Video immer an Bildunterkante schieben
+video-output-levels=full # Projektor Video Level steht auf full
+target-prim=dci-p3 # Projektor steht auf DCI-P3
+dither-depth=8
+dither=error-diffusion
+deband=yes
+
+
+# Scaling-Optionen
+scale=ewa_lanczos # luma
+cscale=ewa_lanczos # chroma
+scale-antiring=0.4 # luma upscale deringing
+dscale-antiring=0.4 # luma downscale deringing
+cscale-antiring=0.4 # chroma upscale deringing
+correct-downscaling=yes
+linear-downscaling=yes
+sigmoid-upscaling=yes
+
+
+[HDR]
+profile-desc=HDR options
+profile-cond=width > 1920 # Hier gibt es sicherlich bessere Bedingungen, HDR-Flag oder so
+target-peak=auto
+#hdr-peak-decay-rate=50
+hdr-compute-peak=yes
+#glsl-shader="~~/adaptive-sharpen.glsl" # bisschen nachwürzen
+
+
+[SDR]
+profile-desc="SDR"
+profile-cond=width < 1921 # Hier gibt es sicherlich bessere Bedingungen
+# Nachschärfen
+#fbo-format=rgba16hf
+#glsl-shader="~~/FSRCNNX_x2_16-0-4-1.glsl" # Sehr Ressourcenhungriger shader
+#glsl-shader="~~/FSRCNNX_x2_8-0-4-1.glsl" # Ressourcenhungriger shader
+#glsl-shader="~~/FSRCNN_x2_r2_8-0-2.glsl" # Ressourcenfreundlicher shader
+
+
+Speichern wie gehabt.
+Autologin
+sudo nano /usr/share/lightdm/lightdm.conf.d/01_debian.conf
+HInzufügen:
+[SeatDefaults]
+autologin-user=player
+autologin-user-timeout=0
+
+
+Speichern….
+
+
+
+
+Benutzer player zur Gruppe autologin hinzufügen
+sudo groupadd -r autologin
+sudo gpasswd -a player autologin
+
+
+Es wird sich immer in die zuletzt ausgewählte Session eingeloggt, siehe dazu auch unten die Anmerkung zu den Sessions.
+
+
+Weitere Optionen / Individualisierungen
+Weitere Systemkonfiguration und Autostart
+Ich empfehle, die Einstellungen, die man im Menü “Anwendungen”->”Einstellungen”->”Einstellungen” findet, ein mal allesamt durchzugehen und entsprechend anzupassen. Besonders wichtig dürften hier folgende Punkte sein:
+* “Benachrichtigungen”, die natürlich aus sein sollten
+* “Energieverwaltung, spez. Bildschirm”, die auch aus sein sollte
+* “Sitzung und Startverhalten, Autom. gestartete Anwendungen” deaktivieren von Bildschirmsperre, Energieverwaltung, XFCE-Notification Daemon, Drucker-Gedöns, und, so man das möchte, hinzufügen von Kodi, einfach mit “+” und dem Eintragen eines Namens - KODI - und dem Befehl: /usr/bin/kodi
+
+
+Alternativ dazu kann man auch im Login-Fenster, also nach dem man sich ausgeloggt hat, oder vor dem Einloggen oben rechts in der Ecke “KODI” als “Session” auswählen und bekommt ein Kodi als Vollbild, aus dem man nicht ausbrechen kann, da es nebst dem Kodi einfach nichts gibt.
+Zugriff auf Netzlaufwerke (SMB)
+sudo apt install libsmbclient smbclient gvfs-backends cifs-utils
+sudo reboot
+Hiernach kann im Dateimanager in der Adresszeile
+smb://IP-ADRESSE_DES_SERVERS
+eingegeben werden und man landet bei der Ansicht der einzelnen Freigaben. Klickt man eine an, wird man aufgefordert, Benutzernamen und Kennwort einzugeben, mit den Optionen, sich dieses zu merken, oder nicht.
+Um die Sache aber neustartfest zu machen, bedarf es einer anderen Maßnahme:
+Zuerst sind Ordner anzulegen, in denen die Freigaben einzuhängen sind:
+sudo mkdir /mnt/FREIGABENAME_01
+usw.
+Recht auf Ordnerzugriff für user player einrichten:
+sudo chown -R player.users /mnt/FREIGABENAME_01
+Dann ist die Datei /etc/fstab zu bearbeiten
+sudo nano /etc/fstab
+Hier kommt pro Freigabe eine Zeile in der Form
+//SERVER-IP/FREIGABENAME_01  /mnt/FREIGABENAME_01  cifs  rw,auto,user,username=BENUTZERNAME,password=PASSWORT,uid=player,gid=users,iocharset=utf8  0  0
+hinzu. Nach einem Neustart ist dann die Freigabe fest im lokalen Dateisystem eingehängt und kann in Kodi als Quelle hinzugefügt werden. Man muss dazu in das “root filesystem” und dann nach /mnt/….
+ACHTUNG: Es gab bereits das Phänomen, dass im Zusammenspiel mit einer Fritzbox das automatische mounten nicht klappte. Abhilfe brachte die Nutzung eines anderen Steckplatzes für das Ethernetkabel in der Firtzbox. Scheinbar sind manche Ports mit Energiespareinstellungen belegt, welche sowohl die Geschwindigkeit drosselten als auch die automatische Anmeldung direkt bei Start nicht zuliesen.
+CPU-Frequenzüberwachung installieren
+sudo apt-get install cpupower-gui linux-cpupower
+
+
+LUA-Skripte installieren
+.lua Skripte runterladen und kopieren nach:
+~/.config/.mpv/scripts/ (Linux/macOS) 
+%AppData%\mpv\scripts\ (Windows)
+Autocrop.lua ->Schwarze Balken beschneiden
+https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua
+
+
+Dynamic-crop.lua ->alles auf LW einpassen
+https://github.com/Ashyni/mpv-scripts/blob/master/dynamic-crop.lua
+
+
+Modifiziertes dynamic-crop für Scope-Leinwände:
+https://www.heimkinoverein.de/forum/thread/21479-mpv-player-als-alternativer-player-z-b-in-kodi/?postID=241793#post241793
+
+
+
+
+Starten / Ausschalten eines JVC Beamers bei Systemstart/-Ende
+offen
+
+
+Potentielle Einträge für die mpv.conf
+Vertikales Strecken und zoomen für Anamorphot
+video-scale-y=1.33
+video-zoom=-0.2
+Bitstreaming aktivieren
+audio-spdif=ac3,dts,dts-hd,eac3,truehd
+audio-exclusive=yes
+Exlusive Fullscreen Mode (Windows)
+d3d11-exclusive-fs=yes
+Einbinden eines ICC Profils in mpv. Das Profil muss zusätzlich vor dem Filmstart ins Betriebssystem geladen werden. Eine Möglichkeit ist unter Linux das Wrapper-Script /usr/bin/mpv-starter
+icc-profile=<file>
+Modifizierte Seek-Bar (breiter, dünner)
+osd-bar-align-y=0.98
+osd-bar-w=99
+osd-border-size=2
+OSD Settings ändern
+https://mpv.io/manual/stable/#osd
+Refresh Rate anpassen bei Filmstart
+https://github.com/CogentRedTester/mpv-changerefresh  (nur windows)
+https://gitlab.com/lvml/mpv-plugin-xrandr
+25Hz Material auf 23,796Hz ausgeben (erspart Refresh-Rate-Umschaltung), funktionert vermutlich nur mit analoger Tonausgabe
+[25fps]
+profile-desc=25fps
+profile-cond=container_fps < 26
+profile-cond=container_fps > 24
+speed=0.95904
+
+
+
+
+Einbindung von SVP
+https://www.heimkinoverein.de/forum/thread/21479-mpv-player-als-alternativer-player-z-b-in-kodi/?postID=241684#post241684
+
+
+JVC Projektor Einstellungen via Netzwerk abhängig von Content ändern:
+offen
+
+
+
+
+Einträge der mpv.conf auf Hotkeys legen
+Boolschen Parameter per Taste setzen:
+p set pause yes
+
+
+Profil per Taste aktivieren (muss mit profile-desc="..." benannt sein):
+m apply-profile "test"
+
+
+Parameter per Taste inkrementieren/dekrementieren (geht auch mit "multiply" statt "add"):
++ add target-peak 10
+- add target-peak -10
+
+
+
+
+
+
+Infos einblenden über aktuelle Verarbeitung
+Shift + I
+Wird noch die “2” gedrückt kommen Renderzeiten in die Anzeige
+
+
+GPU-Auslastung anzeigen
+in Kommandozeile (Linux) nvtop eingeben (wurde während der Grund-Instlalation mit installiert)
+
+
+Integration FLIRC
+https://support.flirc.tv/hc/en-us/articles/203633465-Installing-Flirc-GUI-on-Linux-Debian-
+
+
+Ansteuern externer Relais für z.B. Automation
+Ich habe nun mal dieses hier bestellt:
+https://sigma-shop.com/product/113/udp-lan-ethernet-ip-eight-channels-relay-controller.html
+Achtung! Es gibt Web und UDP Version. Ich versuche es mit der UDP
+https://info.kmtronic.com/socat-udp-control.html 
+Integration bisher nicht gestartet
