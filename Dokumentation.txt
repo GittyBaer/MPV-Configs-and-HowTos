@@ -1,0 +1,127 @@
+====Profiles====
+Built-in high quality profile. Enables better upscaling algorithm. Recommend GPU minimum of newer Intel Iris iGPU, AMD VEGA 8 iGPU, or NVidia MX150. Add this option at the beginning of the file to prevent overriding options!
+profile=gpu-hq
+
+Übrigens kann man sich mit "mpv --show-profile=gpu-hq" anzeigen lassen, was das Profil "gpu-hq" eigentlich enthält.
+Das sind folgende Optionen:
+
+    Profile gpu-hq:
+
+    scale=spline36
+    cscale=spline36
+    dscale=mitchell
+    dither-depth=auto
+    correct-downscaling=yes
+    linear-downscaling=yes
+    sigmoid-upscaling=yes
+    deband=yes
+
+
+
+
+====Debanding=====
+# Test Scene aus Game of Thrones - Welche?
+deband=yes # Default values are 1:64:16:48
+deband-iterations=2 # Range 1-16. Higher = better quality but more GPU usage. >5 is redundant.
+#**The number of debanding steps to perform per sample. Each step reduces a bit more banding, but takes time to compute. Note that the strength of each step falls off very quickly, so high numbers (>4) are practically useless. (Default 1)
+
+deband-threshold=35 # Range 0-4096. Deband strength.
+ #**The debanding filter's cut-off threshold. Higher numbers increase the debanding strength dramatically but progressively diminish image details. (Default 64)
+
+deband-range=20 # Range 1-64. Range of deband. Too high may destroy details.
+#**The debanding filter's initial radius. The radius increases linearly for each iteration. A higher radius will find more gradients, but a lower radius will smooth more aggressively. (Default 16) If you increase the deband-iterations, you should probably decrease this to compensate.
+
+deband-grain=5 # Range 0-4096. Inject grain to cover up bad banding, higher value needed for poor sources.
+#**Add some extra noise to the image. This significantly helps cover up remaining quantization artifacts. Higher numbers add more noise. (Default 48). set to "0" if using the static grain shader.
+
+
+
+## Note: For older/weaker iGPUs, instead of increasing deband-iterations you may need to increase deband-threshold instead if you need a stronger effect. I recommend 1:60:25:30 if you absolutely must run 1 iteration (lower quality but much less GPU usage).
+
+
+====Dithering=====
+
+dither-depth=auto ????
+???error-diffiusion vs fruit ????
+
+
+====Scaling====
+Welche machen sinn?
+FullHD -> 4K
+
+SD -> 4K
+
+
+
+
+====Bar detection====
+-> move video to bottom for mask
+
+Dynamic-Crop Script
+https://github.com/Ashyni/mpv-scripts
+Das Script is besonders gut geeignet mit einer Custom Auflösung (z.B. 3840x1600 oder ähnliches) und erspaart das Benutzen des Lensmemories (auf Kosten der Auflösung und Helligkeit) für 16:9 und alle anderen Zwischenformate.
+Besonders praktisch und bequem, wenn man einen Panamorph besitzt. Dadurch passen sich praktisch alle Formate in die Leinwand ein.
+Auch geeignet, um einfach nur die schwarzen Balken weg zu schneiden. Um das beschnittene Bild automatisch an die Unterkante zu schieben, auch wenn es mitten im Film wechselt, nach der Zeile (aktuell Zeile 374 (nano -c zeigt Zeilennummern an)).
+ mp.command(string.format("no-osd vf append @%s:lavfi-crop=%s", labels.crop, current.whxy))
+noch die Zeile
+ mp.command(string.format("no-osd set video-align-y 1"))
+einfügen und die Option video-align-y=1 aus der mpv.conf entfernen, sollte diese gesetzt gewesen sein.
+
+Da nun bei Filmen ohne schwarze Balken das Script nicht cropt, wird auch das Bild nicht nach unten geschoben. Also muss die Zeile noch ein mal ans Ende der Funktion on_start eingefügt werden, also eingefügt vor der Zeile "end", als Zeile 555.
+
+
+
+
+====Bildfrequenz Anpassung====
+Automatische Umschaltung auf dem Video-fps am nächsten kommende Bildwiederholfrequenz unter Beibehaltung der aktuellen Auflösung:
+Für Linux: https://github.com/kevinlekill…pts/tree/master/autospeed
+
+Für Windows: https://github.com/kevinlekill…/tree/master/autospeedwin
+
+BISLANG UNGETESTET
+
+
+
+
+
+
+
+====Audio Config====
+alang = 'ger,de,eng,en'
+
+
+
+
+====Subtitle Config====
+#Das Meiste selbsterklärend
+
+slang = 'de,ger,eng,en,enUS' # enUS for Crunchyroll.
+sid=no # Untertitel beim Start deaktivieren
+sub-font-size=32
+image-subs-video-resolution=yes
+sub-bold=yes
+sub-border-size=2
+sub-color=0.70/0.70 # Subs 70% grau with 70% Alpha
+sub-auto=fuzzy # externe Subs suchen und finden
+
+
+====Allgemeines====
+save-position-on-quit=yes
+
+
+====Alternative Oberfläche====
+Grundlage für die Oberfläche zum Basteln (mit osc=no in mpv.conf):
+https://github.com/mpv-player/…master/player/lua/osc.lua
+osc=no # Disables default OSD. Use this option ONLY if you have a custom osc.lua
+
+
+
+====OSD====
+# OSD-Bar aufhübschen und nach unten schieben
+osd-duration=3000
+osd-bar-align-y=0.99
+osd-bar-w=99
+osd-border-size=2
+osd-bar-h=2
+osd-font-size=25
+osd-color=0.7/0.4 # Subs 70% grau with 40% Alpha
