@@ -39,10 +39,60 @@ deband-grain=5 # Range 0-4096. Inject grain to cover up bad banding, higher valu
 ## Note: For older/weaker iGPUs, instead of increasing deband-iterations you may need to increase deband-threshold instead if you need a stronger effect. I recommend 1:60:25:30 if you absolutely must run 1 iteration (lower quality but much less GPU usage).
 
 
+
+# ===== Color Space =====
+target-trc=auto
+gamma-auto
+vf=format=colorlevels=full:colormatrix=auto
+video-output-levels=full
+
+
 ====Dithering=====
 
 dither-depth=auto ????
-???error-diffiusion vs fruit ????
+--dither-depth=<N|no|auto>
+    Set dither target depth to N. Default: no.
+
+no    Disable any dithering done by mpv.
+auto  Automatic selection. If output bit depth cannot be detected, 8 bits per component are assumed.
+8     Dither to 8 bit output.
+
+Note that the depth of the connected video display device cannot be detected. Often, LCD panels will do dithering on their own, which conflicts with this option and leads to ugly output.
+
+--dither-size-fruit=<2-8>
+    Set the size of the dither matrix (default: 6). The actual size of the matrix is (2^N) x (2^N) for an option value of N, so a value of 6 gives a size of 64x64. The matrix is generated at startup time, and a large matrix can take rather long to compute (seconds).
+    Used in --dither=fruit mode only.
+	
+--dither=<fruit|ordered|error-diffusion|no>
+    Select dithering algorithm (default: fruit). (Normally, the --dither-depth option controls whether dithering is enabled.)
+
+    The error-diffusion option requires compute shader support. It also requires large amount of shared memory to run, the size of which depends on both the kernel (see --error-diffusion option below) and the height of video window. It will fallback to fruit dithering if there is no enough shared memory to run the shader.
+
+--temporal-dither
+    Enable temporal dithering. (Only active if dithering is enabled in general.) This changes between 8 different dithering patterns on each frame by changing the orientation of the tiled dithering matrix. Unfortunately, this can lead to flicker on LCD displays, since these have a high reaction time.
+--temporal-dither-period=<1-128>
+    Determines how often the dithering pattern is updated when --temporal-dither is in use. 1 (the default) will update on every video frame, 2 on every other frame, etc.
+--error-diffusion=<kernel>
+    The error diffusion kernel to use when --dither=error-diffusion is set.
+
+simple
+    Propagate error to only two adjacent pixels. Fastest but low quality.
+sierra-lite
+    Fast with reasonable quality. This is the default.
+floyd-steinberg
+    Most notable error diffusion kernel.
+atkinson
+    Looks different from other kernels because only fraction of errors will be propagated during dithering. A typical use case of this kernel is saving dithered screenshot (in window mode). This kernel produces slightly smaller file, with still reasonable dithering quality.
+
+There are other kernels (use --error-diffusion=help to list) but most of them are much slower and demanding even larger amount of shared memory. Among these kernels, burkes achieves a good balance between performance and quality, and probably is the one you want to try first.
+
+Example:
+# ===== Dithering =====
+dither-depth=auto
+temporal-dither=yes
+dither=fruit
+
+
 
 
 ====Scaling====
@@ -51,8 +101,36 @@ FullHD -> 4K
 
 SD -> 4K
 
+Example:
+# ===== Upscaling & Processing =====
+glsl-shaders-clr
+# luma upscaling
+# note: any FSRCNNX above FSRCNNX_x2_8-0-4-1 is not worth the additional computional overhead
+glsl-shaders="~/AppData\Roaming\mpv\shaders\FSRCNNX_x2_8-0-4-1.glsl"
+scale=ewa_lanczos
+# luma downscaling
+# note: ssimdownscaler is tuned for mitchell and downscaling=no
+glsl-shaders-append="~/AppData\Roaming\mpv\shaders\SSimDownscaler.glsl"
+dscale=mitchell
+linear-downscaling=no
+# chroma upscaling and downscaling
+glsl-shaders-append="~/AppData\Roaming\mpv\shaders\KrigBilateral.glsl"
+cscale=mitchell
+sigmoid-upscaling=yes
+
+einzelne Optionen bei HKV suchen, was sagen die anderen?
 
 
+
+
+
+
+
+# ===== Anti-Ringing =====
+scale-antiring=0.7 # luma upscale deringing
+dscale-antiring=0.7 # luma downscale deringing
+cscale-antiring=0.7 # chroma upscale deringing
+# -> Welche Parameter sinnvoll
 
 ====Bar detection====
 -> move video to bottom for mask
@@ -75,13 +153,8 @@ Da nun bei Filmen ohne schwarze Balken das Script nicht cropt, wird auch das Bil
 ====Bildfrequenz Anpassung====
 Automatische Umschaltung auf dem Video-fps am nächsten kommende Bildwiederholfrequenz unter Beibehaltung der aktuellen Auflösung:
 Für Linux: https://github.com/kevinlekill…pts/tree/master/autospeed
-
 Für Windows: https://github.com/kevinlekill…/tree/master/autospeedwin
-
-BISLANG UNGETESTET
-
-
-
+UNGETESTET
 
 
 
@@ -104,10 +177,26 @@ sub-border-size=2
 sub-color=0.70/0.70 # Subs 70% grau with 70% Alpha
 sub-auto=fuzzy # externe Subs suchen und finden
 
+blend-subtitles=yes # Entscheidet ob subtitles von icc profilen und so weiter beeinflußt werden und ob sie mit dem vieo skaliert werden 
+#....ev. nur für DVD content interessant?
 
 ====Allgemeines====
 save-position-on-quit=yes
 
+# Enables best HW decoder; turn off for software decoding
+hwdec=auto
+
+border=no # hides the window title bar
+msg-color=yes # color log messages on terminal
+term-osd-bar=yes # display a progress bar on the terminal
+cursor-autohide=1000 # autohide the curser after 1s
+
+# Uses a large seekable RAM cache even for local input.
+cache=yes
+# cache-secs=300
+# Uses extra large RAM cache (needs cache=yes to make it useful).
+demuxer-max-bytes=1800M
+demuxer-max-back-bytes=1200M
 
 ====Alternative Oberfläche====
 Grundlage für die Oberfläche zum Basteln (mit osc=no in mpv.conf):
@@ -125,3 +214,30 @@ osd-border-size=2
 osd-bar-h=2
 osd-font-size=25
 osd-color=0.7/0.4 # Subs 70% grau with 40% Alpha
+
+
+# ===== Motion Interpolation / a la madvr Smooth Motion =====
+override-display-fps=60
+video-sync=display-resample
+interpolation=yes
+tscale=oversample # smoothmotion
+
+
+==== 3DLut ====
+Was ist hier zu tun?
+
+
+
+
+==== Weiteres====
+
+Shader Benchmarks:
+https://artoriuz.github.io/blog/mpv_upscaling.html
+
+Statistiken aufrufen:
+Außerdem drück mal Shift + I und dann 2, dann kannst du sehen welche Optionen wieviel Zeit verbrauchen.
+
+Custom Resolution Utility Windows: https://custom-resolution-utility.en.lo4d.com/windows
+
+
+Hardware decoding is not enabled by default, because it is typically an additional source of errors. It is worth using only if your CPU is too slow to decode a specific video.
