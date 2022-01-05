@@ -1,4 +1,5 @@
-﻿Installations-Anleitung Debian mit NVidia Grafik, Kodi und mpv
+# Installationsanleitung Debian
+Installations-Anleitung Debian mit NVidia Grafik, Kodi und mpv
 Download des Images Debian “testing”
 https://cdimage.debian.org/cdimage/weekly-builds/amd64/iso-dvd/debian-testing-amd64-DVD-1.iso
 
