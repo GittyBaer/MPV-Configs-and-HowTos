@@ -1,4 +1,4 @@
-# MPV-HKV-Configs-HowTos
+# MPV-Configs-and-HowTos
 Collection of configurations and instructions to use the media player MPV for home theaters
 
 Based on the (german) discussion in the "Heimkino Verein" Forum: 
