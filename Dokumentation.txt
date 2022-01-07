@@ -223,8 +223,34 @@ interpolation=yes
 tscale=oversample # smoothmotion
 
 
-==== 3DLut ====
+==== 3DLut / Color ====
 Was ist hier zu tun?
+
+#Only one of these Options:
+#target-prim=bt.2020
+#icc-profile="C:\Windows\System32\spool\drivers\color\Example.icc" # Use defined icc file
+#icc-profile-auto # Use this if your system has a default icc profile setup already.
+target-prim=dci-p3 # Use this if you don't have a calibrated icc profile, but know your monitor's gamut
+
+Afaik wird icc Profil nur als 1D LUT verwendet
+
+
+
+====LUA Scripte====
+
+
+Parameter an Script übergeben (Bsp. mdann dynamic_crop script)
+
+    script-opts-append=dynamic_crop-<optionsname>=<wert>
+
+Beispiel:
+
+    script-opts-append=dynamic_crop-zoom16_9=yes
+    script-opts-append=dynamic_crop-scope_ratio=2.4
+
+
+
+
 
 
 
@@ -241,3 +267,27 @@ Custom Resolution Utility Windows: https://custom-resolution-utility.en.lo4d.com
 
 
 Hardware decoding is not enabled by default, because it is typically an additional source of errors. It is worth using only if your CPU is too slow to decode a specific video.
+
+
+
+Einträge der mpv.conf auf Hotkeys legen
+input.conf:
+Boolschen Parameter per Taste setzen:
+p set pause yes
+
+Profil per Taste aktivieren (muss mit profile-desc="..." benannt sein):
+m apply-profile "test"
+
+Parameter per Taste inkrementieren/dekrementieren (geht auch mit "multiply" statt "add"):
++ add target-peak 10
+- add target-peak -10
+
+
+
+=====Debugging=====
+./mpv.com --msg-level=all=v "Datei.mkv"
+
+
+Infos einblenden über aktuelle Verarbeitung
+Shift + I
+Wird noch die “2” gedrückt kommen Renderzeiten in die Anzeige
