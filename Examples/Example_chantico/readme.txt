@@ -22,6 +22,7 @@ Einstellungen für: Dynamic Tonemapping, HDR, UHD inkl. Scaling von SD Material 
 2. MPV Player hier downloaden installieren
 
 3. Entpacken und den Order "mpv" in C:\Users\DEIN NUTZERNAME\AppData\Roaming kopieren (Bei DEIN NUTZERNAME - deinen eigenen Pfad wählen)
+3b. WICHTIG, PFADE VOM SCRIPT ANPASSEN
 
 4. Fertig - Film ab
 
