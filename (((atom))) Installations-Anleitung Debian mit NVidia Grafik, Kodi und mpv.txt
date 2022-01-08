@@ -89,7 +89,9 @@ sudo apt install kodi mpv
 mpv in Kodi als Player einbinden:
 Anlegen/editieren der Datei .kodi/userdata/playercorefactory.xml
 (Dateien, die mit einem Punkt beginnen, sind unsichtbar, bis sie im Dateimanager auf sichtbar gestellt werden. Auch auf dem Terminal braucht es den Schalter “-a”, also z.B. ls -la um sie sehen zu können).
-Im Terminal
+Im Terminal (ausgehend vom User Ordner /home/player/)
+sudo mkdir .kodi
+sudo mkdir .kodi/userdata
 sudo nano .kodi/userdata/playercorefactory.xml
 aufrufen und folgenden Text markieren, kopieren und mit “STRG” und “SHIFT” und “v” einfügen
 
@@ -163,11 +165,12 @@ sudo chmod 755 /usr/bin/mpv-starter
 ________________
 
 
-Anlegen der Datei /home/player/.config/mpv/mpv.conf
+Anlegen der Datei /home/player/.config/mpv/mpv.conf 
+mkdir .config (ausgehend vom User Ordner /home/player/)
 mkdir .config/mpv
 nano .config/mpv/mpv.conf
-Inhalt:
 
+Inhalt:
 
 # Allgemeines
 save-position-on-quit=yes
@@ -196,11 +199,9 @@ sub-color=0.70/0.70 # Subs 70% grau with 70% Alpha
 sub-auto=fuzzy # externe Subs suchen und finden
 #sub-pos=114
 
-
 #Screenshots
-screenshot-directory=/home/mpv/Pictures/MPV-Screenshots
+screenshot-directory=/home/player/Pictures/MPV-Screenshots
 screenshot-template="%F-%P"
-
 
 # Audio HDMI out über Nvidia-Ausgang, evtl. DEV=2 auf 1 anpassen
 audio-device=alsa/hdmi:CARD=NVidia,DEV=2
@@ -208,11 +209,9 @@ audio-spdif=ac3,eac3,dts-hd,truehd
 audio-channels=7.1,5.1,stereo
 audio-delay=0.0 # Audio-Delay in Sekunden
 
-
 # GPU-Einstellungen für Linux!
 gpu-api=vulkan
 hwdec=auto-copy-safe
-
 
 # Video-Ausgabe
 target-trc=auto # Projektor Gamma steht auf 2,2
@@ -265,7 +264,7 @@ autologin-user=player
 autologin-user-timeout=0
 
 
-Speichern….
+Speichern…
 
 
 
@@ -304,7 +303,7 @@ sudo nano /etc/fstab
 Hier kommt pro Freigabe eine Zeile in der Form
 //SERVER-IP/FREIGABENAME_01  /mnt/FREIGABENAME_01  cifs  rw,auto,user,username=BENUTZERNAME,password=PASSWORT,uid=player,gid=users,iocharset=utf8  0  0
 hinzu. Nach einem Neustart ist dann die Freigabe fest im lokalen Dateisystem eingehängt und kann in Kodi als Quelle hinzugefügt werden. Man muss dazu in das “root filesystem” und dann nach /mnt/….
-ACHTUNG: Es gab bereits das Phänomen, dass im Zusammenspiel mit einer Fritzbox das automatische mounten nicht klappte. Abhilfe brachte die Nutzung eines anderen Steckplatzes für das Ethernetkabel in der Firtzbox. Scheinbar sind manche Ports mit Energiespareinstellungen belegt, welche sowohl die Geschwindigkeit drosselten als auch die automatische Anmeldung direkt bei Start nicht zuliesen.
+ACHTUNG: Es gab bereits das Phänomen, dass im Zusammenspiel mit einer Fritzbox das automatische mounten nicht klappte. Abhilfe brachte die Nutzung eines anderen Steckplatzes für das Ethernetkabel in der Fritzbox. Scheinbar sind manche Ports mit Energiespareinstellungen belegt, welche sowohl die Geschwindigkeit drosselten als auch die automatische Anmeldung direkt bei Start nicht zuliesen.
 CPU-Frequenzüberwachung installieren
 sudo apt-get install cpupower-gui linux-cpupower
 
