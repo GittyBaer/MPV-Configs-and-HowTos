@@ -120,17 +120,25 @@ sigmoid-upscaling=yes
 
 einzelne Optionen bei HKV suchen, was sagen die anderen?
 
+RAVU shader soll besser als FSRCNNX sein -> testen
 
 
+sofern du später in der Config kein "glsl-schaders-clr" hast, dann ja.
+deine config sollte immer so aussehen (irgendwo)
+
+glsl-shaders-clr
+glsl-schader="C.\Pfad\Shader1.glsl"
+glsl-schader-append="C.\Pfad\Shader2.glsl"
+glsl-schader-append="C.\Pfad\Shader3.glsl" 
 
 
-
-
-# ===== Anti-Ringing =====
+===== Anti-Ringing =====
 scale-antiring=0.7 # luma upscale deringing
 dscale-antiring=0.7 # luma downscale deringing
 cscale-antiring=0.7 # chroma upscale deringing
 # -> Welche Parameter sinnvoll
+
+
 
 ====Bar detection====
 -> move video to bottom for mask
@@ -249,11 +257,26 @@ Beispiel:
     script-opts-append=dynamic_crop-scope_ratio=2.4
 
 
+Hier noch ein kleiner Tipp für LUA-Skripte: man kann direkt Properties observieren. 
+Wenn also eine Property in file-loaded noch nicht gesetzt ist, kommt sie eventuell kurz danach. Gamma 
+(für HDR-Erkennung) ist z.B. so ein Fall.
+
+mp.observe_property("video-params/gamma", "string", on_gamma)
 
 
+=====tonemapping=====
+I got very good "MadVR quality" with the following settings:
 
-
-
+hdr-compute-peak = yes #enable scene detection/dynamic tone mapping.
+target-prim = bt.2020
+target-trc = gamma2.4
+target-peak = 95 # that's my real max nits (RS500 with 1,100h on the lamp)
+tone-mapping = hable
+tone-mapping-desaturate-exponent=0.6
+tone-mapping-desaturate=0.9
+hdr-peak-decay-rate=50 #this one controls how aggressive the scene detection works
+Quelle: https://www.avsforum.com/threads/improving-madvr-hdr-to-sdr-mapping-for-projector.2954506/page-690#post-61215026
+ 
 
 ==== Weiteres====
 
@@ -268,7 +291,19 @@ Custom Resolution Utility Windows: https://custom-resolution-utility.en.lo4d.com
 
 Hardware decoding is not enabled by default, because it is typically an additional source of errors. It is worth using only if your CPU is too slow to decode a specific video.
 
+--ontop
+    Makes the player window stay on top of other windows.
+    On Windows, if combined with fullscreen mode, this causes mpv to be treated as exclusive fullscreen window that bypasses the Desktop Window Manager.
+--ontop-level=<window|system|desktop|level>
+    (macOS only) Sets the level of an ontop window (default: window).
+    window:	On top of all other windows.
+    system:	On top of system elements like Taskbar, Menubar and Dock.
+    desktop:	On top of the Dekstop behind windows and Desktop icons.
+    level:	A level as integer.
 
+
+Configs strukturieren:
+include=linux.conf #relative und absolute Pfade sind möglich
 
 Einträge der mpv.conf auf Hotkeys legen
 input.conf:
@@ -285,7 +320,7 @@ Parameter per Taste inkrementieren/dekrementieren (geht auch mit "multiply" stat
 
 
 =====Debugging=====
-./mpv.com --msg-level=all=v "Datei.mkv"
+.\mpv.com --msg-level=all=v "Datei.mkv"
 
 
 Infos einblenden über aktuelle Verarbeitung
